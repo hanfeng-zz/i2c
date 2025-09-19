@@ -121,7 +121,7 @@ int iic_read(const int fd, const uint16_t deviceAddr, const uint32_t internalAdd
             ioctl_data.msgs		= ioctl_msg;
         }
 
-        ret = ioctl(fd, I2C_RDWR, (unsigned long)&ioctl_data);
+        ret = ioctl(fd, I2C_RDWR, &ioctl_data);
     }
 
     return ret;
