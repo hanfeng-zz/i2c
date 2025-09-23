@@ -25,9 +25,17 @@ extern "C" {
 int iic_open(const char *const device,
              const struct iic_config config);
 
-int iic_read(const int fd, const uint16_t deviceAddr, const uint32_t internalAddr, uint8_t *buf, const uint16_t len);
+int iic_read_ioctl(const int fd,
+                   const uint16_t deviceAddr,
+                   const uint32_t internalAddr,
+                   uint8_t *buf,
+                   const uint16_t len);
 
-int iic_write(const int fd, const uint16_t deviceAddr, const uint32_t internalAddr, uint8_t *buf, const uint16_t len);
+int iic_write_ioctl(const int fd,
+                    const uint16_t deviceAddr,
+                    const uint32_t internalAddr,
+                    uint8_t *buf,
+                    const uint16_t len);
 
 int iic_close(const int fd);
 

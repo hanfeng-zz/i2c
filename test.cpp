@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     int fd2 = iic_open(dev2, config);
     assert(fd >= 0);
 
-    int ret = iic_read(fd, 0x51, addr, buf, 128);
+    int ret = iic_read_ioctl(fd, 0x51, addr, buf, 128);
     assert(ret >= 0);
 
     for (int i = 0; i < LASER_BUFFER_LEN; i++) {

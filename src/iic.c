@@ -79,11 +79,11 @@ int iic_open(const char *const device,
     return fd;
 }
 
-int iic_read(const int fd,
-             const uint16_t deviceAddr,
-             const uint32_t internalAddr,
-             uint8_t *buf,
-             const uint16_t len) {
+int iic_read_ioctl(const int fd,
+                   const uint16_t deviceAddr,
+                   const uint32_t internalAddr,
+                   uint8_t *buf,
+                   const uint16_t len) {
     struct entry *node = match_fd(fd);
     if (!node) {
         return IIC_ERR;
@@ -131,11 +131,11 @@ int iic_read(const int fd,
     return ioctl(fd, I2C_RDWR, &ioctl_data);
 }
 
-int iic_write(const int fd,
-              const uint16_t deviceAddr,
-              const uint32_t internalAddr,
-              uint8_t *buf,
-              const uint16_t len) {
+int iic_write_ioctl(const int fd,
+                    const uint16_t deviceAddr,
+                    const uint32_t internalAddr,
+                    uint8_t *buf,
+                    const uint16_t len) {
 
     int ret = IIC_ERR;
     struct entry *node = match_fd(fd);
