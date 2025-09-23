@@ -16,6 +16,9 @@
 #define IIC_IDDR_LEN                sizeof(uint32_t)
 #define IIC_PAGE_MAX                (256 + IIC_IDDR_LEN)
 
+#define IIC_ERR                     (-200)
+
+
 enum iicMode {
     IIC_MODE_IOCTL,
     IIC_MODE_SMBUS,

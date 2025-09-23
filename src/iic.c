@@ -18,6 +18,7 @@
 #include <netinet/in.h>
 #include <endian.h>
 #include <string.h>
+#include <errno.h>
 
 #define IIC_GET_WRITE_SIZE(p, i, r) (p ? (((i % p + r) > p) ? p : (p - i % p)) : r)
 
@@ -30,6 +31,7 @@ struct iic_reverse {
 
 struct entry {
     int fd;
+    char dev[50];
     struct iic_config config;
     LIST_ENTRY(entry) entries;
 };
@@ -66,20 +68,25 @@ int iic_open(const char *const device,
     struct entry *node = (struct entry *)calloc(1, sizeof(struct entry));
     if (NULL == node) {
         close(fd);
-        return -2;
+        return -errno;
     }
 
     node->fd        = fd;
     node->config    = config;
+    memcpy(node->dev, device, strlen(device));
 
     LIST_INSERT_HEAD(&list_head, node, entries);
     return fd;
 }
 
-int iic_read(const int fd, const uint16_t deviceAddr, const uint32_t internalAddr, uint8_t *buf, const uint16_t len) {
+int iic_read(const int fd,
+             const uint16_t deviceAddr,
+             const uint32_t internalAddr,
+             uint8_t *buf,
+             const uint16_t len) {
     struct entry *node = match_fd(fd);
     if (!node) {
-        return -2;
+        return IIC_ERR;
     }
 
     uint16_t flag                           = (node->config.tenBit ? I2C_M_TEN : 0 ) | I2C_M_RD;
@@ -121,13 +128,17 @@ int iic_read(const int fd, const uint16_t deviceAddr, const uint32_t internalAdd
         ioctl_data.msgs		= ioctl_msg;
     }
 
-    return ioctl(fd, I2C_RDWR, &ioctl_data);;
+    return ioctl(fd, I2C_RDWR, &ioctl_data);
 }
 
-int iic_write(const int fd, const uint16_t deviceAddr, const uint32_t internalAddr, uint8_t *buf, const uint16_t len) {
+int iic_write(const int fd,
+              const uint16_t deviceAddr,
+              const uint32_t internalAddr,
+              uint8_t *buf,
+              const uint16_t len) {
     struct entry *node = match_fd(fd);
     if (!node) {
-        return -2;
+        return IIC_ERR;
     }
 
     uint8_t tx[IIC_PAGE_MAX];
@@ -178,7 +189,7 @@ int iic_write(const int fd, const uint16_t deviceAddr, const uint32_t internalAd
 
 
 int iic_close(const int fd) {
-    int ret = -2;
+    int ret = IIC_ERR;
     struct entry *node = match_fd(fd);
 
     if (node) {
@@ -186,4 +197,18 @@ int iic_close(const int fd) {
         iic_free(node);
     }
     return ret;
+}
+
+void iic_debug() {
+    struct entry *node = LIST_FIRST(&list_head);
+    while (node) {
+        printf("dev:%s fd:%d pageBytes:%d internalAddrBytes:%d tenBit:%d delayUs:%d\n",
+               node->dev,
+               node->fd,
+               node->config.pageBytes,
+               node->config.internalAddrBytes,
+               node->config.tenBit,
+               node->config.delayUs);
+        node = LIST_NEXT(node, entries);
+    };
 }
