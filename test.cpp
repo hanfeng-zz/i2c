@@ -15,17 +15,17 @@
 
 int main(int argc, char *argv[]) {
 
-    char *dev = "/dev/i2c-3";
+    char *dev = "/dev/i2c-0";
     struct iic_config config = {0};
-    uint8_t buf[LASER_BUFFER_LEN] = {0};
-    uint32_t addr = 0x00;
+    uint8_t buf[LASER_BUFFER_LEN] = {0}, wbuf[LASER_BUFFER_LEN] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+    uint32_t addr = 0x80;
 
     config.internalAddrBytes = 1;
 
     int fd = iic_open(dev, config);
     assert(fd >= 0);
 
-    int ret = iic_read(fd, 0x50, addr, buf, 128);
+    int ret = iic_read(fd, 0x51, addr, buf, 128);
     assert(ret >= 0);
 
     for (int i = 0; i < LASER_BUFFER_LEN; i++) {
@@ -34,6 +34,10 @@ int main(int argc, char *argv[]) {
             printf("\n");
         }
     }
+
+    printf("----------------read----------------\n");
+    ret = iic_write(fd, 0x51, addr, wbuf, 16);
+    assert(ret >= 0);
 
     ret = iic_close(fd);
     assert(ret == 0);

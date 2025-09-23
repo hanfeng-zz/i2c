@@ -22,9 +22,11 @@ int iic_open(const char *const device,
 
 int iic_read(const int fd, const uint16_t deviceAddr, const uint32_t internalAddr, uint8_t *buf, const uint16_t len);
 
-int iic_write(const int fd, const uint16_t deviceAddr, const uint8_t *internalAddr, uint8_t *buf, const uint16_t len);
+int iic_write(const int fd, const uint16_t deviceAddr, const uint32_t internalAddr, uint8_t *buf, const uint16_t len);
 
 int iic_close(const int fd);
+
+void iic_debug();
 #ifdef __cplusplus
 }
 #endif

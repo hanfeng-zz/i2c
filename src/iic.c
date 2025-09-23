@@ -17,8 +17,9 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <endian.h>
+#include <string.h>
 
-#define IIC_IDDR_LEN sizeof(uint32_t)
+#define IIC_GET_WRITE_SIZE(p, i, r) (p ? (((i % p + r) > p) ? p : (p - i % p)) : r)
 
 struct iic_reverse {
     union {
@@ -76,82 +77,101 @@ int iic_open(const char *const device,
 }
 
 int iic_read(const int fd, const uint16_t deviceAddr, const uint32_t internalAddr, uint8_t *buf, const uint16_t len) {
-
-    int ret = -2;
     struct entry *node = match_fd(fd);
-
-    if (node) {
-
-        uint16_t flag                           = (node->config.tenBit ? I2C_M_TEN : 0 ) | I2C_M_RD;
-        struct i2c_msg ioctl_msg[2]             = {0};
-        struct i2c_rdwr_ioctl_data ioctl_data   = {0};
-#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-        struct iic_reverse reverse_internalAddr = {.addr = internalAddr};
-#else
-        struct iic_reverse reverse_internalAddr = {.addr = htonl(internalAddr)};
-#endif
-
-        if (node->config.internalAddrBytes) {
-
-            ioctl_msg[0].len    = node->config.internalAddrBytes;
-            ioctl_msg[0].addr	= deviceAddr;
-            ioctl_msg[0].flags	= 0;
-#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-            ioctl_msg[0].buf    = reverse_internalAddr.msg;
-#else
-            ioctl_msg[0].buf    = reverse_internalAddr.msg + (IIC_IDDR_LEN - node->config.internalAddrBytes);
-#endif
-
-            ioctl_msg[1].len    = len;
-            ioctl_msg[1].addr	= deviceAddr;
-            ioctl_msg[1].buf    = buf;
-            ioctl_msg[1].flags	= flag;
-
-            ioctl_data.nmsgs	= 2;
-            ioctl_data.msgs		= ioctl_msg;
-
-        } else {
-
-            ioctl_msg[0].len    = len;
-            ioctl_msg[0].addr	= deviceAddr;
-            ioctl_msg[0].buf    = buf;
-            ioctl_msg[0].flags	= flag;
-
-            ioctl_data.nmsgs	= 1;
-            ioctl_data.msgs		= ioctl_msg;
-        }
-
-        ret = ioctl(fd, I2C_RDWR, &ioctl_data);
+    if (!node) {
+        return -2;
     }
 
-    return ret;
+    uint16_t flag                           = (node->config.tenBit ? I2C_M_TEN : 0 ) | I2C_M_RD;
+    struct i2c_msg ioctl_msg[2]             = {0};
+    struct i2c_rdwr_ioctl_data ioctl_data   = {0};
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+    struct iic_reverse reverse_internalAddr = {.addr = internalAddr};
+#else
+    struct iic_reverse reverse_internalAddr = {.addr = htonl(internalAddr)};
+#endif
+
+    if (node->config.internalAddrBytes) {
+
+        ioctl_msg[0].len    = node->config.internalAddrBytes;
+        ioctl_msg[0].addr	= deviceAddr;
+        ioctl_msg[0].flags	= 0;
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+        ioctl_msg[0].buf    = reverse_internalAddr.msg;
+#else
+        ioctl_msg[0].buf    = reverse_internalAddr.msg + (IIC_IDDR_LEN - node->config.internalAddrBytes);
+#endif
+
+        ioctl_msg[1].len    = len;
+        ioctl_msg[1].addr	= deviceAddr;
+        ioctl_msg[1].buf    = buf;
+        ioctl_msg[1].flags	= flag;
+
+        ioctl_data.nmsgs	= 2;
+        ioctl_data.msgs		= ioctl_msg;
+
+    } else {
+
+        ioctl_msg[0].len    = len;
+        ioctl_msg[0].addr	= deviceAddr;
+        ioctl_msg[0].buf    = buf;
+        ioctl_msg[0].flags	= flag;
+
+        ioctl_data.nmsgs	= 1;
+        ioctl_data.msgs		= ioctl_msg;
+    }
+
+    return ioctl(fd, I2C_RDWR, &ioctl_data);;
 }
 
-int iic_write(const int fd, const uint16_t deviceAddr, const uint8_t *internalAddr, uint8_t *buf, const uint16_t len) {
-    int ret = -2;
+int iic_write(const int fd, const uint16_t deviceAddr, const uint32_t internalAddr, uint8_t *buf, const uint16_t len) {
     struct entry *node = match_fd(fd);
-
-    if (node) {
-
-        uint16_t flag                           = node->config.tenBit ? I2C_M_TEN : 0;
-        struct i2c_msg ioctl_msg[2]             = {0};
-        struct i2c_rdwr_ioctl_data ioctl_data   = {0};
-
-        if (node->config.internalAddrBytes) {
-            //todo
-            ret = -3;
-        } else {
-            ioctl_msg[0].len    = len;
-            ioctl_msg[0].addr	= deviceAddr;
-            ioctl_msg[0].buf    = buf;
-            ioctl_msg[0].flags	= flag;
-
-            ioctl_data.nmsgs	= 1;
-            ioctl_data.msgs		= ioctl_msg;
-
-            ret = ioctl(fd, I2C_RDWR, &ioctl_data);
-        }
+    if (!node) {
+        return -2;
     }
+
+    uint8_t tx[IIC_PAGE_MAX];
+    int ret                                 = -2;
+    uint32_t iAddr                          = internalAddr;
+    struct i2c_msg ioctl_msg                = {0};
+    struct i2c_rdwr_ioctl_data ioctl_data   = {0};
+    struct iic_reverse reverse_internalAddr = {0};
+    uint16_t flag = node->config.tenBit ? I2C_M_TEN : 0, start = 0, remain = len, wSize;
+
+    do {
+        //update internal address
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+        reverse_internalAddr.addr           = iAddr;
+        memcpy(tx, reverse_internalAddr.msg, node->config.internalAddrBytes);
+#else
+        reverse_internalAddr.addr           = htonl(iAddr);
+        memcpy(tx, reverse_internalAddr.msg + (IIC_IDDR_LEN - node->config.internalAddrBytes), node->config.internalAddrBytes);
+#endif
+
+//        wSize = node->config.pageBytes ?
+//                ((iAddr % node->config.pageBytes + remain > node->config.pageBytes)
+//                ? node->config.pageBytes : (node->config.pageBytes - (iAddr % node->config.pageBytes))) : remain;
+        wSize = IIC_GET_WRITE_SIZE(node->config.pageBytes, iAddr, remain);
+
+        memcpy(tx + node->config.internalAddrBytes, buf + start, wSize);
+
+        ioctl_msg.len	                    = node->config.internalAddrBytes + wSize;
+        ioctl_msg.addr	                    = deviceAddr;
+        ioctl_msg.buf	                    = tx;
+        ioctl_msg.flags	                    = flag;
+
+        ioctl_data.nmsgs                    = 1;
+        ioctl_data.msgs	                    = &ioctl_msg;
+
+        ret = ioctl(fd, I2C_RDWR, &ioctl_data);
+        if (ret == -1) {
+            return ret;
+        }
+
+        start   += wSize;
+        remain  -= wSize;
+        iAddr   += wSize;
+    } while (remain);
 
     return ret;
 }

@@ -12,7 +12,9 @@
 
 #include <stdint.h>
 
-#define IIC_DELAY_MICROSECOND 500
+#define IIC_DELAY_MICROSECOND       500
+#define IIC_IDDR_LEN                sizeof(uint32_t)
+#define IIC_PAGE_MAX                (256 + IIC_IDDR_LEN)
 
 enum iicMode {
     IIC_MODE_IOCTL,
@@ -21,9 +23,11 @@ enum iicMode {
 
 struct iic_config {
     /* max number of bytes per page,
-     * 1K/2K 8, 4K/8K/16K 16, 32K/64K 32 etc.
-     * Default 8 bytes per page */
-    uint8_t     pageBytes;
+     * 1K/2K        8
+     * 4K/8K/16K    16,
+     * 32K/64K      32
+     * no page      0 etc.*/
+    uint32_t    pageBytes;
     /* device internal(word) address bytes,
      * such as: 24C04 1 byte, 24C64 2 bytes.
      * Default 1 byte */
