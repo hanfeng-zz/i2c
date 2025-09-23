@@ -1,11 +1,11 @@
-// Copyright (c) 2025 Shifei Technologies. All rights reserved.
-//
-// This file is part of internal projects, unauthorized copying of this file
-// via any medium is strictly prohibited.
+/*
+ * Copyright (C) 2025-09-23  zheng zhao
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0 or later.
+ * See <https://www.gnu.org/licenses/>.
+ */
 
-//
-// Created by zheng zhao on 2025/9/17.
-//
 
 #include "iic.h"
 #include <linux/i2c.h>
