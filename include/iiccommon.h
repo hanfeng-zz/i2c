@@ -18,6 +18,7 @@
 
 #define IIC_ERR                     (-200)
 
+#define IIC_GET_WRITE_SIZE(p, i, r) (p ? (((i % p + r) > p) ? p : (p - i % p)) : r)
 
 enum iicMode {
     IIC_MODE_IOCTL,
@@ -40,6 +41,13 @@ struct iic_config {
     /* operation delay, unit microsecond,
      * default */
     int         delayUs;
+};
+
+struct iic_reverse {
+    union {
+        uint32_t addr;
+        uint8_t msg[IIC_IDDR_LEN];
+    };
 };
 
 

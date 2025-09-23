@@ -20,15 +20,6 @@
 #include <string.h>
 #include <errno.h>
 
-#define IIC_GET_WRITE_SIZE(p, i, r) (p ? (((i % p + r) > p) ? p : (p - i % p)) : r)
-
-struct iic_reverse {
-    union {
-        uint32_t addr;
-        uint8_t msg[IIC_IDDR_LEN];
-    };
-};
-
 struct entry {
     int fd;
     char dev[50];

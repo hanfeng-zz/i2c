@@ -8,10 +8,21 @@
 //
 
 #include "iic.h"
+#include "iicplusplus.h"
 #include <cassert>
 #include <cstdio>
 
 #define LASER_BUFFER_LEN 128
+
+void test_print(uint8_t *buf, int len) {
+    for (int i = 0; i < len; i++) {
+        printf("%02x ", buf[i]);
+        if (((i + 1) % 16) == 0) {
+            printf("\n");
+        }
+    }
+    printf("----------------end---------------------\n");
+}
 
 int main(int argc, char *argv[]) {
 
@@ -25,6 +36,26 @@ int main(int argc, char *argv[]) {
     config.internalAddrBytes = 1;
     config.pageBytes = 8;
 
+    class Iic iic;
+
+    int rc = iic.open(dev1, config);
+    assert(rc == 0);
+
+    rc = iic.read_ioctl( 0x51, addr, buf, LASER_BUFFER_LEN);
+    assert(rc >= 0);
+
+    test_print(buf, LASER_BUFFER_LEN);
+
+    rc = iic.write_ioctl(0x51, addr, wbuf, 16);
+    assert(rc >= 0);
+
+
+    rc = iic.read_ioctl( 0x51, addr, buf, LASER_BUFFER_LEN);
+    assert(rc >= 0);
+
+    test_print(buf, LASER_BUFFER_LEN);
+
+#if 0
     int fd = iic_open(dev, config);
     assert(fd >= 0);
 
@@ -37,19 +68,14 @@ int main(int argc, char *argv[]) {
     int ret = iic_read_ioctl(fd, 0x51, addr, buf, 128);
     assert(ret >= 0);
 
-    for (int i = 0; i < LASER_BUFFER_LEN; i++) {
-        printf("%02x ", buf[i]);
-        if (((i + 1) % 16) == 0) {
-            printf("\n");
-        }
-    }
+    test_print(buf, LASER_BUFFER_LEN);
 
     printf("----------------read----------------\n");
-//    ret = iic_write(fd, 0x51, addr, wbuf, 16);
-//    assert(ret >= 0);
-//
-//    ret = iic_close(fd);
-//    assert(ret == 0);
+    ret = iic_write_ioctl(fd, 0x51, addr, wbuf, 16);
+    assert(ret >= 0);
+
+    ret = iic_close(fd);
+    assert(ret == 0);
 
     iic_debug();
     ret = iic_close(fd);
@@ -58,4 +84,5 @@ int main(int argc, char *argv[]) {
     assert(ret >= 0);
     iic_close(fd2);
     assert(ret >= 0);
+#endif
 }
