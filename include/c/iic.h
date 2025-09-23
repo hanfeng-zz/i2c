@@ -16,7 +16,12 @@ extern "C" {
 #endif
 
 #include "iiccommon.h"
-
+/*
+ * Function: iic_open
+ * Description: Support for repeated open, and the information is stored global(struct list_node list_head;)
+ * Return: if success, return file descriptor, otherwise return (-errno),
+ *         used to indicate open faild or apply for memory failed.
+ */
 int iic_open(const char *const device,
              const struct iic_config config);
 

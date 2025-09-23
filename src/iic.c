@@ -62,7 +62,7 @@ int iic_open(const char *const device,
 
     int fd = open(device, O_RDWR);
     if (fd < 0) {
-        return fd;
+        return -errno;
     }
 
     struct entry *node = (struct entry *)calloc(1, sizeof(struct entry));
@@ -136,13 +136,15 @@ int iic_write(const int fd,
               const uint32_t internalAddr,
               uint8_t *buf,
               const uint16_t len) {
+
+    int ret = IIC_ERR;
     struct entry *node = match_fd(fd);
+
     if (!node) {
-        return IIC_ERR;
+        return ret;
     }
 
     uint8_t tx[IIC_PAGE_MAX];
-    int ret                                 = -2;
     uint32_t iAddr                          = internalAddr;
     struct i2c_msg ioctl_msg                = {0};
     struct i2c_rdwr_ioctl_data ioctl_data   = {0};
@@ -176,7 +178,7 @@ int iic_write(const int fd,
 
         ret = ioctl(fd, I2C_RDWR, &ioctl_data);
         if (ret == -1) {
-            return ret;
+            return -errno;
         }
 
         start   += wSize;
@@ -194,6 +196,9 @@ int iic_close(const int fd) {
 
     if (node) {
         ret = close(fd);
+        if (ret == -1) {
+            return -errno;
+        }
         iic_free(node);
     }
     return ret;
