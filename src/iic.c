@@ -67,7 +67,7 @@ int iic_open(const char *const device,
     memcpy(node->dev, device, strlen(device));
 
     LIST_INSERT_HEAD(&list_head, node, entries);
-    return fd;
+    return 0;
 }
 
 int iic_read_ioctl(const int fd,
@@ -119,7 +119,7 @@ int iic_read_ioctl(const int fd,
         ioctl_data.msgs		= ioctl_msg;
     }
 
-    return ioctl(fd, I2C_RDWR, &ioctl_data);
+    return (ioctl(fd, I2C_RDWR, &ioctl_data) == -1) ? -errno : 0;
 }
 
 int iic_write_ioctl(const int fd,
@@ -127,12 +127,10 @@ int iic_write_ioctl(const int fd,
                     const uint32_t internalAddr,
                     uint8_t *buf,
                     const uint16_t len) {
-
-    int ret = IIC_ERR;
     struct entry *node = match_fd(fd);
 
     if (!node) {
-        return ret;
+        return IIC_ERR;
     }
 
     uint8_t tx[IIC_PAGE_MAX];
@@ -167,8 +165,7 @@ int iic_write_ioctl(const int fd,
         ioctl_data.nmsgs                    = 1;
         ioctl_data.msgs	                    = &ioctl_msg;
 
-        ret = ioctl(fd, I2C_RDWR, &ioctl_data);
-        if (ret == -1) {
+        if (ioctl(fd, I2C_RDWR, &ioctl_data) == -1) {
             return -errno;
         }
 
@@ -177,22 +174,20 @@ int iic_write_ioctl(const int fd,
         iAddr   += wSize;
     } while (remain);
 
-    return ret;
+    return 0;
 }
 
 
 int iic_close(const int fd) {
-    int ret = IIC_ERR;
     struct entry *node = match_fd(fd);
-
     if (node) {
-        ret = close(fd);
-        if (ret == -1) {
+        if (close(fd) == -1) {
             return -errno;
         }
         iic_free(node);
     }
-    return ret;
+
+    return 0;
 }
 
 void iic_debug() {

@@ -77,7 +77,7 @@ int Iic::read_ioctl(const uint16_t deviceAddr,
         ioctl_data.msgs		= ioctl_msg;
     }
 
-    return ::ioctl(_fd, I2C_RDWR, &ioctl_data);
+    return (::ioctl(_fd, I2C_RDWR, &ioctl_data) == -1) ? -errno : 0;
 }
 
 int Iic::write_ioctl(const uint16_t deviceAddr,
@@ -86,7 +86,6 @@ int Iic::write_ioctl(const uint16_t deviceAddr,
                     const uint16_t len) {
 
     uint8_t tx[IIC_PAGE_MAX] {};
-    int ret                                 = IIC_ERR;
     uint32_t iAddr                          = internalAddr;
     struct i2c_msg ioctl_msg                = {0};
     struct i2c_rdwr_ioctl_data ioctl_data   = {0};
@@ -115,8 +114,7 @@ int Iic::write_ioctl(const uint16_t deviceAddr,
         ioctl_data.nmsgs                    = 1;
         ioctl_data.msgs	                    = &ioctl_msg;
 
-        ret = ::ioctl(_fd, I2C_RDWR, &ioctl_data);
-        if (ret == -1) {
+        if (::ioctl(_fd, I2C_RDWR, &ioctl_data) == -1) {
             return -errno;
         }
 
@@ -125,7 +123,7 @@ int Iic::write_ioctl(const uint16_t deviceAddr,
         iAddr   += wSize;
     } while (remain);
 
-    return ret;
+    return 0;
 }
 
 
