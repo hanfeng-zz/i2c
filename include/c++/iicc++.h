@@ -40,7 +40,7 @@ public:
                     const uint32_t internalAddr,
                     uint8_t *buf,
                     const uint16_t len);
-
+    //auto release file descriptor, also possible to release manually
     int closed();
 
     void debug();
