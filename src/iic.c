@@ -119,7 +119,12 @@ int iic_read_ioctl(const int fd,
         ioctl_data.msgs		= ioctl_msg;
     }
 
-    return (ioctl(fd, I2C_RDWR, &ioctl_data) == -1) ? -errno : 0;
+    int rc = ioctl(fd, I2C_RDWR, &ioctl_data);
+    if (rc == -1) {
+        return -errno;
+    }
+
+    return 0;
 }
 
 int iic_write_ioctl(const int fd,

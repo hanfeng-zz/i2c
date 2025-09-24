@@ -77,7 +77,12 @@ int Iic::read_ioctl(const uint16_t deviceAddr,
         ioctl_data.msgs		= ioctl_msg;
     }
 
-    return (::ioctl(_fd, I2C_RDWR, &ioctl_data) == -1) ? -errno : 0;
+    int rc = ::ioctl(_fd, I2C_RDWR, &ioctl_data);
+    if (rc == -1) {
+        return -errno;
+    }
+
+    return 0;
 }
 
 int Iic::write_ioctl(const uint16_t deviceAddr,
