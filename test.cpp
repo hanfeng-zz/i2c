@@ -8,7 +8,7 @@
 
 
 #include "iic.h"
-#include "iicplusplus.h"
+#include "iicc++.h"
 #include <cassert>
 #include <cstdio>
 
