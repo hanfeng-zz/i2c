@@ -133,7 +133,15 @@ int IicDriver::write_ioctl(const uint16_t deviceAddr,
 
 
 int IicDriver::closed() {
-    return _fd == -1 ? 0 : ::close(_fd);
+    if (_fd == -1) {
+        return 0;
+    }
+
+    int rc = ::close(_fd);
+    if (rc == -1) {
+        return -errno;
+    }
+    return 0;
 }
 
 void IicDriver::debug() {
