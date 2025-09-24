@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     config.internalAddrBytes = 1;
     config.pageBytes = 8;
 
-    class Iic iic;
+    class IicDriver iic;
 
     int rc = iic.open(dev1, config);
     assert(rc == 0);

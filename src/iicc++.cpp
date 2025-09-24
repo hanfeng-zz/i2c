@@ -18,11 +18,11 @@
 #include <endian.h>
 #include <cstring>
 
-Iic::~Iic() {
+IicDriver::~IicDriver() {
     closed();
 }
 
-int Iic::open(const std::string &device, const struct iic_config &config) {
+int IicDriver::open(const std::string &device, const struct iic_config &config) {
     _fd = ::open(device.c_str(), O_RDWR);
     if (_fd < 0) {
         return -errno;
@@ -33,10 +33,10 @@ int Iic::open(const std::string &device, const struct iic_config &config) {
     return 0;
 }
 
-int Iic::read_ioctl(const uint16_t deviceAddr,
-                   const uint32_t internalAddr,
-                   uint8_t *buf,
-                   const uint16_t len) {
+int IicDriver::read_ioctl(const uint16_t deviceAddr,
+                          const uint32_t internalAddr,
+                          uint8_t *buf,
+                          const uint16_t len) {
 
     uint16_t flag                           = (_config.tenBit ? I2C_M_TEN : 0 ) | I2C_M_RD;
     struct i2c_msg ioctl_msg[2]             = {0};
@@ -85,10 +85,10 @@ int Iic::read_ioctl(const uint16_t deviceAddr,
     return 0;
 }
 
-int Iic::write_ioctl(const uint16_t deviceAddr,
-                    const uint32_t internalAddr,
-                    uint8_t *buf,
-                    const uint16_t len) {
+int IicDriver::write_ioctl(const uint16_t deviceAddr,
+                           const uint32_t internalAddr,
+                           uint8_t *buf,
+                           const uint16_t len) {
 
     uint8_t tx[IIC_PAGE_MAX] {};
     uint32_t iAddr                          = internalAddr;
@@ -132,11 +132,11 @@ int Iic::write_ioctl(const uint16_t deviceAddr,
 }
 
 
-int Iic::closed() {
+int IicDriver::closed() {
     return _fd == -1 ? 0 : ::close(_fd);
 }
 
-void Iic::debug() {
+void IicDriver::debug() {
     std::cout << "dev:" << _dev.c_str()
               << " fd:" << _fd
               << " pageBytes:" << _config.pageBytes

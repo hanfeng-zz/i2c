@@ -15,19 +15,19 @@
 
 #include <iostream>
 
-class Iic {
+class IicDriver {
 public:
-    Iic(const Iic &) = delete;
+    IicDriver(const IicDriver &) = delete;
 
-    Iic &operator=(const Iic&) = delete;
+    IicDriver &operator=(const IicDriver&) = delete;
 
-    Iic(const Iic &&) = delete;
+    IicDriver(const IicDriver &&) = delete;
 
-    Iic &operator=(const Iic&&) = delete;
+    IicDriver &operator=(const IicDriver&&) = delete;
 
-    Iic() = default;
+    IicDriver() = default;
 
-    virtual ~Iic();
+    virtual ~IicDriver();
 
     int open(const std::string &device, const struct iic_config &config);
 
